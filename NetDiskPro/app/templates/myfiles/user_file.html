@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block page_content %}
+<div>
+    <h1>Files</h1>
+    <ul id="ul1">
+        {% for file in files %}
+            <li>{{ file.filename }} {{ file.filesize }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
