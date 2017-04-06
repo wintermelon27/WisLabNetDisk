@@ -2,6 +2,12 @@
 {% block page_content %}
 <div>
     <h1>Files</h1>
+    <form method="POST" enctype="multipart/form-data">
+        <input type=file name=file>
+        <br>
+        <input type=submit value=Upload>
+    </form>
+    <br>
     <ul id="ul1">
         {% for file in files %}
             <li>{{ file.filename }} {{ file.filesize }}</li>

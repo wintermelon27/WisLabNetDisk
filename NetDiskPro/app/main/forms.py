@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, TextAreaField, BooleanField, SelectField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, Regexp
 from wtforms import ValidationError
@@ -57,3 +59,11 @@ class PostForm(FlaskForm):
 class CommentForm(FlaskForm):
     body = StringField('Enter your comment', validators=[DataRequired()])
     submit = SubmitField('Submit')
+
+class UploadForm(FlaskForm):
+    upload = FileField(validators=[
+        FileRequired(),
+        FileAllowed(['jpg', 'jpeg', 'png', 'zip', 'rar', 'doc', 'txt', 'caj'])
+    ])
+    submit = SubmitField(u'上传')
+
