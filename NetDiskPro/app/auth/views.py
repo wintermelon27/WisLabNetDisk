@@ -1,9 +1,19 @@
+# -*- coding: utf-8 -*-
 from flask import render_template, redirect, request, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from . import auth
 from .. import db
-from ..models import User
+from ..models import User, UserFolderPath
 from .forms import LoginForm, RegistrationForm
+import os
+from flask import current_app
+
+def create_folder_for_registered_user(username):
+    base_dir = current_app.config.get('UPLOAD_FOLDER')
+    new_dir = base_dir + '\\' + username
+    if os.path.exists(new_dir) is False:
+        os.makedirs(new_dir)
+    return new_dir
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -31,6 +41,12 @@ def register():
                     password=form.password.data)
         db.session.add(user)
         flash('You can login now.')
+
+        new_dir = create_folder_for_registered_user(user.username)    # 为新用户新建存储文件的目录
+        new_user_folder_path = UserFolderPath(username=user.username,
+                                            folder_path=new_dir)
+        db.session.add(new_user_folder_path)
+
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
 

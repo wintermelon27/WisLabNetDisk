@@ -2,6 +2,9 @@
   <dictionary name="wintermelon">
     <words>
       <w>cuser</w>
+      <w>dirpath</w>
+      <w>filepath</w>
+      <w>myfiles</w>
       <w>tablename</w>
       <w>ufile</w>
       <w>usernames</w>
