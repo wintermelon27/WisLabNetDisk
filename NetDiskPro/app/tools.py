@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from random import Random
 
 # 字节bytes转化kb\m\g
 def formatSize(bytes):
@@ -26,5 +27,17 @@ def getDocSize(path):
         return formatSize(size)
     except Exception as err:
         print(err)
+
+# 随机字符串
+def random_str(randomlength=8):
+    str = ''
+    chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz0123456789'
+    length = len(chars) - 1
+    random = Random()
+    for i in range(randomlength):
+        str += chars[random.randint(0, length)]
+    return str
+
 def __init__(self):
     pass
+

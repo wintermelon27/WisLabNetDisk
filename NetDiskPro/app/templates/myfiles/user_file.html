@@ -1,16 +1,13 @@
 {% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
 {% block page_content %}
 <div>
+    <script src="http://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <h1>Files</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <div class="form-group">
-            <input type=file name=file>
-        </div>
-        <div class="btn-group" role="group" aria-label="...">
-            <button type="submit" class="btn btn-default">上传</button>
-        </div>
-    </form>
+    {{ wtf.quick_form(uploadform) }}
     <br>
+
     <div class="btn-group" role="group" aria-label="...">
         <button type="button" class="btn btn-default">
             <a href="{{ url_for('main.user_files', username = current_user.username, cur_dir = up_dir) }}">
@@ -18,12 +15,47 @@
             </a>
         </button>
     </div>
+
+    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myModal">
+    新建文件夹
+    </button>
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">新建文件夹</h4>
+                </div>
+                <div class="modal-body">
+                    {{ wtf.quick_form(newfform) }}
+                    <!--
+                    <div class="input-group input-group-lg">
+                      <span class="input-group-addon" id="sizing-addon1">文件名</span>
+                      <input type="text" class="form-control" placeholder="输入新建文件夹的名字" aria-describedby="sizing-addon1">
+                    </div>
+                    -->
+                </div>
+                <!--
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary">新建</button>
+                </div>
+                -->
+            </div>
+        </div>
+    </div>
+
     <br>
     <br>
+
     <table class="table table-hover">
         <thead>
             <tr>
                 <th>文件名</th>
+                <th>-</th>
+                <th>-</th>
                 <th>-</th>
                 <th>-</th>
                 <th>大小</th>
@@ -42,9 +74,13 @@
                     <td>-</td>
                     <td>
                         <div class="btn-group" role="group" aria-label="...">
-                            <button type="button" class="btn btn-default">删除</button>
+                            <a href="{{ url_for('main.delete_folder', delfolderpath=cur_dir+'/'+dir.dirname, folderpath=cur_dir, username=current_user.username) }}">
+                                <button type="button" class="btn btn-default">删除</button>
+                            </a>
                         </div>
                     </td>
+                    <td>-</td>
+                    <td>-</td>
                     <td>-</td>
                     <td>{{ dir.modifytime }}</td>
                 </tr>
@@ -65,7 +101,25 @@
                     </td>
                     <td>
                         <div class="btn-group" role="group" aria-label="...">
-                            <button type="button" class="btn btn-default">删除</button>
+                            <a href="{{ url_for('main.delete_file', filepath=cur_dir+'/'+file.filename, folderpath=cur_dir, username=current_user.username) }}">
+                                <button type="button" class="btn btn-default">删除</button>
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group" aria-label="...">
+                            <a href="{{ url_for('main.share_file', username=current_user.username, filepath=cur_dir+'/'+file.filename) }}">
+                                <button type="button" class="btn btn-default" >分享
+                                </button>
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group" aria-label="...">
+                            <a href="{{ url_for('main.share_private_file', username=current_user.username, filepath=cur_dir+'/'+file.filename) }}">
+                                <button type="button" class="btn btn-default" >私密分享
+                                </button>
+                            </a>
                         </div>
                     </td>
                     <td>{{ file.filesize }}</td>
@@ -74,5 +128,6 @@
             {% endfor %}
         </tbody>
     </table>
+
 </div>
 {% endblock %}

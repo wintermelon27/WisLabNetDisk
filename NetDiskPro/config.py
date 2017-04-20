@@ -10,7 +10,7 @@ class Config:
     FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     UPLOAD_FOLDER = 'H:\\XJB_Projects\\WisLabNetDisk\\files'
-    ALLOWED_EXTENSIONS = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'caj']
+    # ALLOWED_EXTENSIONS = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'caj']
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 
     @staticmethod
