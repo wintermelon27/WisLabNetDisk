@@ -12,6 +12,7 @@ class Config:
     UPLOAD_FOLDER = 'H:\\XJB_Projects\\WisLabNetDisk\\files'
     # ALLOWED_EXTENSIONS = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'caj']
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    REDIS_EX_TIME = 3 * 24 * 60 * 60    # 分享文件过期时间
 
     @staticmethod
     def init_app(app):

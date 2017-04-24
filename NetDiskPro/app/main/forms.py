@@ -64,7 +64,7 @@ class UploadForm(FlaskForm):    #文件上传的表单
     upload = FileField(validators=[
         FileRequired(),
         FileAllowed(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx',
-                     'xls', 'xlsx', 'ppt', 'pptx', 'caj'])
+                     'xls', 'xlsx', 'ppt', 'pptx', 'caj', 'mp4'])
     ])
     submit = SubmitField(u'上传')
 
