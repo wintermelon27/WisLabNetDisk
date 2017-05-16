@@ -73,10 +73,29 @@
                     </td>
                     <td>-</td>
                     <td>
-                        <div class="btn-group" role="group" aria-label="...">
-                            <a href="{{ url_for('main.delete_folder', delfolderpath=cur_dir+'/'+dir.dirname, folderpath=cur_dir, username=current_user.username) }}">
-                                <button type="button" class="btn btn-default">删除</button>
-                            </a>
+                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myDeleteModal">
+                        删除
+                        </button>
+                        <div class="modal fade" id="myDeleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalDelete">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">×</span>
+                                        </button>
+                                        <h4 class="modal-title" id="myModalLabel">删除</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        确认是否删除？该操作不可逆
+                                    </div>
+                                    <div class="modal-footer">
+                                        <a href="{{ url_for('main.delete_folder', delfolderpath=cur_dir+'/'+dir.dirname, folderpath=cur_dir, username=current_user.username) }}">
+                                            <button type="button" class="btn btn-primary">确认删除</button>
+                                        </a>
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </td>
                     <td>-</td>
@@ -93,17 +112,42 @@
                     </td>
                     <td>
                         <div class="btn-group" role="group" aria-label="...">
+                            <!--
                             <a href="{{ url_for('main.download_file', filepath=cur_dir+'/'+file.filename) }}">
+                                <button type="button" class="btn btn-default" >下载
+                                </button>
+                            </a>
+                            -->
+                            <a href="{{ file.download_url }}">
                                 <button type="button" class="btn btn-default" >下载
                                 </button>
                             </a>
                         </div>
                     </td>
                     <td>
-                        <div class="btn-group" role="group" aria-label="...">
-                            <a href="{{ url_for('main.delete_file', filepath=cur_dir+'/'+file.filename, folderpath=cur_dir, username=current_user.username) }}">
-                                <button type="button" class="btn btn-default">删除</button>
-                            </a>
+                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#myDeleteModal">
+                        删除
+                        </button>
+                        <div class="modal fade" id="myDeleteModal" tabindex="-1" role="dialog" aria-labelledby="myModalDelete">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">×</span>
+                                        </button>
+                                        <h4 class="modal-title" id="myModalLabel">删除</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        确认是否删除？该操作不可逆
+                                    </div>
+                                    <div class="modal-footer">
+                                        <a href="{{ url_for('main.delete_file', filepath=cur_dir+'/'+file.filename, folderpath=cur_dir, username=current_user.username) }}">
+                                            <button type="button" class="btn btn-primary">确认删除</button>
+                                        </a>
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </td>
                     <td>

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}WisLab NetDisk{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Hello, {% if current_user.is_authenticated %}{{ current_user.username }}{% else %}Stranger{% endif %}!</h1>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>文件名</th>
+                <th>下载</th>
+                <th>大小</th>
+                <th>修改日期</th>
+            </tr>
+        </thead>
+        <tbody>
+            <td>
+                <img src="{{ url_for('static', filename='imgs/file.png') }}" alt="file"/>
+                {{ sharefilename }}
+            </td>
+            <td>
+                <a href="{{ file_download_url }}">
+                    <button type="button" class="btn btn-default" >下载
+                    </button>
+                </a>
+            </td>
+            <td>
+                {{ filesize }}
+            </td>
+            <td>-</td>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -60,6 +60,7 @@ class CommentForm(FlaskForm):
     body = StringField('Enter your comment', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
+
 class UploadForm(FlaskForm):    #文件上传的表单
     upload = FileField(validators=[
         FileRequired(),
@@ -68,9 +69,11 @@ class UploadForm(FlaskForm):    #文件上传的表单
     ])
     submit = SubmitField(u'上传')
 
+
 class NewFolderForm(FlaskForm):  # 新建文件夹的提交表单
     FolderName = StringField('输入新建文件夹的名字', validators=[DataRequired()])
     submit = SubmitField(u'提交')
+
 
 class AskExtractcodeForm(FlaskForm):    # 输入提取密码的表单
     extractcode = StringField('输入提取密码', validators=[DataRequired()])

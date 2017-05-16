@@ -1,6 +1,7 @@
-#coding:utf-8
+# -*- coding:utf-8 -*-
 # from datetime import datetime
-from flask import render_template, session, redirect, url_for, abort, request, flash
+import requests
+from flask import render_template, session, redirect, url_for, abort, request, flash, make_response
 from . import main
 from .forms import NewFolderForm, UploadForm, AskExtractcodeForm
 from .. import db
@@ -13,6 +14,11 @@ from flask import current_app, send_from_directory
 from werkzeug import secure_filename
 from flask_login import current_user
 import redis
+from fdfs_client.client import *
+import time
+import json
+import shutil
+
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -26,6 +32,7 @@ def index():
 
     return render_template('index.html')
 
+
 @main.route('/user/<username>')
 def user(username):
     cuser = User.query.filter_by(username=username).first()
@@ -33,9 +40,11 @@ def user(username):
         abort(404)
     return render_template('user.html', user=cuser)
 
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in current_app.config.get('ALLOWED_EXTENSIONS')
+
 
 @main.route('/files/<username>/<path:cur_dir>', methods=['GET', 'POST'])
 def user_files(username, cur_dir):
@@ -55,6 +64,9 @@ def user_files(username, cur_dir):
     print type(tmp), tmp
 
     file_dir += tmp
+    root = ""
+    dirs = []
+    files = []
     for root, dirs, files in os.walk(file_dir):
         print("root: " + root)  # 当前目录路径
         print(dirs)  # 当前路径下所有子目录
@@ -62,18 +74,29 @@ def user_files(username, cur_dir):
         break
 
     files_return_data = []
-    for i in files:
-        tmp = {}
-        tmp['filename'] = i
-        # print(file_dir + "\\" + i)
-        tmp['filesize'] = getDocSize(file_dir + "\\" + i)
-        # print(tmp['filesize'])
+    if files is not []:
+        for i in files:
+            try:
+                json_file = open(os.path.join(root, i), 'r')
+                json_load = json.load(json_file)
+                tmp = {}
+                tmp['filename'] = json_load['filename']
+                # print(file_dir + "\\" + i)
+                # tmp['filesize'] = getDocSize(file_dir + "\\" + i)
+                tmp['filesize'] = json_load['Uploaded size']
+                # print(tmp['filesize'])
 
-        mtime = time.ctime(os.path.getmtime(file_dir + "\\" + i))
-        # print mtime
-        tmp['modifytime'] = mtime
+                mtime = time.ctime(os.path.getmtime(file_dir + "\\" + i))
+                # print mtime
+                tmp['modifytime'] = mtime
+                Storage_IP = json_load['Storage IP']
+                Remote_file_id = json_load['Remote file_id']
+                tmp['download_url'] = 'http://' + Storage_IP + '/' + Remote_file_id
+                json_file.close()
+                files_return_data.append(tmp)
+            except Exception, ex:
+                print ex
 
-        files_return_data.append(tmp)
 
     dirs_return_data = []
     for i in dirs:
@@ -91,6 +114,22 @@ def user_files(username, cur_dir):
         print(u"uploadFile: ", filename)
         upload_file_dir = root
         uploadform.upload.data.save(os.path.join(upload_file_dir, filename))
+
+        try:
+            my_fdfs_client_file = current_app.config.get('MY_FDFS_CLIENT_FILE')
+            f_client = Fdfs_client(my_fdfs_client_file)  # 连接远程FastDfs数据库
+            ret_upload = f_client.upload_by_filename(os.path.join(upload_file_dir, filename))
+            file_id = ret_upload['Remote file_id'].replace('\\', '/')  # 新版本文件存放Remote file_id格式变化
+            ret_upload['Remote file_id'] = file_id
+            ret_upload['filename'] = filename
+            print ret_upload
+            print type(ret_upload)
+            dict_write_to_file(ret_upload, filename, upload_file_dir)
+            os.remove(os.path.join(upload_file_dir, filename))
+            flash(u'上传成功！')
+        except Exception, ex:
+            print ex
+
         return redirect(url_for('main.user_files', username=username, cur_dir=cur_dir))
 
     # 返回上一级
@@ -119,6 +158,7 @@ def user_files(username, cur_dir):
                            dirs=dirs_return_data, up_dir=up_dir, cur_dir=cur_dir,
                            newfform=newfform, uploadform=uploadform)
 
+
 @main.route('/files/download/<path:filepath>', methods=['GET'])
 def download_file(filepath):
     print("filepath: " + filepath)
@@ -127,9 +167,19 @@ def download_file(filepath):
     for i in range(0, len(filepath2) - 1):
         file_real_path += "\\" + filepath2[i]
     print("file_read_path: ", file_real_path)
-    filename = filepath2[len(filepath2) - 1]
+    filename = filepath2[len(filepath2) - 1] + '.json'
     print("fllename: ", filename)
-    return send_from_directory(file_real_path, filename, as_attachment=True)
+    json_file = open(os.path.join(file_real_path, filename), 'r')
+    json_load = json.load(json_file)
+    Storage_IP = json_load['Storage IP']
+    Remote_file_id = json_load['Remote file_id']
+    response = make_response()
+    print 'http://' + Storage_IP + '/' + Remote_file_id
+    r = requests.get('http://' + Storage_IP + '/' + Remote_file_id)
+    response.data = r.text
+    return response
+    # return send_from_directory(file_real_path, filename, as_attachment=True)
+
 
 @main.route('/files/delete_file/<username>/<path:folderpath>/x/<path:filepath>', methods=['GET'])
 def delete_file(username, filepath, folderpath):
@@ -137,8 +187,26 @@ def delete_file(username, filepath, folderpath):
     file_real_path = current_app.config.get('UPLOAD_FOLDER')
     for i in range(0, len(filepath2)):
         file_real_path += "\\" + filepath2[i]
-    os.remove(file_real_path)
+
+    json_file = open(file_real_path + '.json', 'r')
+    json_load = json.load(json_file)
+    print file_real_path + '.json'
+
+    try:
+        my_fdfs_client_file = current_app.config.get('MY_FDFS_CLIENT_FILE')
+        f_client = Fdfs_client(my_fdfs_client_file)  # 连接远程FastDfs数据库
+        file_id = json_load['Remote file_id']
+        print 'Remote file_id: ', file_id, type(file_id)
+        ret_delete = f_client.delete_file(str(file_id))
+        print ret_delete
+    except Exception, ex:
+        print ex
+    json_file.close()
+
+    os.remove(file_real_path + '.json')
+    flash(u'删除成功！')
     return redirect(url_for('main.user_files', username=username, cur_dir=folderpath))
+
 
 @main.route('/files/delete_folder/<username>/<path:folderpath>/x/<path:delfolderpath>', methods=['GET'])
 def delete_folder(username, folderpath, delfolderpath):
@@ -146,8 +214,12 @@ def delete_folder(username, folderpath, delfolderpath):
     delfolder_real_path = current_app.config.get('UPLOAD_FOLDER')
     for i in range(0, len(delfolderpath2)):
         delfolder_real_path += "\\" + delfolderpath2[i]
-    os.removedirs(delfolder_real_path)
+    print "delfolder: ", delfolder_real_path
+    # os.removedirs(delfolder_real_path)
+    remove_dir(delfolder_real_path)
+    flash(u'删除成功！')
     return redirect(url_for('main.user_files', username=username, cur_dir=folderpath))
+
 
 @main.route('/files/share/<username>/<path:filepath>')
 def share_file(username, filepath):
@@ -161,6 +233,7 @@ def share_file(username, filepath):
     filepath2 = filepath.split('/')
     sharefilename = filepath2[len(filepath2) - 1]
     return render_template('myfiles/share.html', id=ranstr, sharefilename=sharefilename)
+
 
 @main.route('/files/share_private/<username>/<path:filepath>')
 def share_private_file(username, filepath):
@@ -202,7 +275,16 @@ def get_share_file(str_id):
                     print("file_read_path: ", file_real_path)
                     filename = filepath2[len(filepath2) - 1]
                     print("fllename: ", filename)
-                    return send_from_directory(unicode(file_real_path), unicode(filename), as_attachment=True)
+                    json_file = open(os.path.join(unicode(file_real_path), unicode(filename) + u'.json'), 'r')
+                    json_load = json.load(json_file)
+                    Storage_IP = json_load['Storage IP']
+                    Remote_file_id = json_load['Remote file_id']
+                    file_download_url = 'http://' + Storage_IP + '/' + Remote_file_id
+                    Uploaded_size = json_load['Uploaded size']
+                    json_file.close()
+                    return render_template('myfiles/file_share_download.html', sharefilename=filename,
+                                           file_download_url=file_download_url, filesize=Uploaded_size)
+                    # return send_from_directory(unicode(file_real_path), unicode(filename), as_attachment=True)
                 else:
                     flash(u'提取码错误！')
             return render_template('myfiles/ask_for_extractcode.html', askforextractcodeform=extractcodeform, shareuser=share_user)
@@ -215,6 +297,14 @@ def get_share_file(str_id):
             print("file_read_path: ", file_real_path)
             filename = filepath2[len(filepath2) - 1]
             print("fllename: ", filename)
-            return send_from_directory(unicode(file_real_path), unicode(filename), as_attachment=True)
+            json_file = open(os.path.join(unicode(file_real_path), unicode(filename) + u'.json'), 'r')
+            json_load = json.load(json_file)
+            Storage_IP = json_load['Storage IP']
+            Remote_file_id = json_load['Remote file_id']
+            file_download_url = 'http://' + Storage_IP + '/' + Remote_file_id
+            Uploaded_size = json_load['Uploaded size']
+            json_file.close()
+            return render_template('myfiles/file_share_download.html', sharefilename=filename, file_download_url=file_download_url, filesize=Uploaded_size)
+            # return send_from_directory(unicode(file_real_path), unicode(filename), as_attachment=True)
     else:
         return render_template('myfiles/share_not_exist.html')
